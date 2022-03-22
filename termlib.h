@@ -52,7 +52,6 @@ namespace termlib{
     auto getcurxy(int *x, int *y) -> void;
     auto setcurxy(int x, int y) -> void;
     auto savecurpos() -> void;
-
     auto rescurpos() -> void;
 
     auto clrscr() -> void;
@@ -60,7 +59,7 @@ namespace termlib{
     auto getch_raw() -> int;
     auto getch() -> int;
 
-	auto printprogressbar(float progress, int max_size=10) -> int;
+	auto printprogressbar(int progress, int total, int bar_size=10) -> int;
     auto menu(std::vector<std::string> options) -> int;
 }
 

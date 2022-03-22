@@ -119,15 +119,15 @@ auto termlib::rescurpos() -> void {
 }
 
 
-auto termlib::printprogressbar(float progress, int max_size) -> int {
+auto termlib::printprogressbar(int progress, int total, int bar_size) -> int {
 	std::cout << '[';
-	auto amount = static_cast<int>(progress) / max_size;
+	auto amount = progress * bar_size / total;
 
     for(auto i = 0 ; i < amount ; ++i){
         std::cout << '#';
     }
 
-    for(auto i = amount; i < max_size ; ++i){
+    for(auto i = amount; i < bar_size ; ++i){
         std::cout << '-';
     }
 
