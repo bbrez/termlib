@@ -36,6 +36,8 @@ namespace termlib{
         LineNo = 'G'
     } direction;
 
+	auto setup_terminal() -> unsigned long;
+
     auto set_echo(bool state) -> void;
 
     auto tty_set_raw() -> void;

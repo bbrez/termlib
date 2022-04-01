@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-#if defined(__unix__) //linux specific code
+#if defined(__unix__) //código específico para linux
 
 auto termlib::set_echo(bool state) -> void {
     if(state){
@@ -35,29 +35,82 @@ auto termlib::getch_raw() -> int {
 auto termlib::getch() -> int {
     tty_set_raw();
     int ch = getchar_unlocked();
-    if(ch == 3) {
+    if(ch == 3) { //ctrl-c
         tty_set_normal();
-        exit(127); //ctrl-c
+        exit(127);
     }
-    if(ch == 27){ //For control sequences beginning with ESC
-        getchar_unlocked(); //discard '['
-        ch = getchar_unlocked(); //Get real result
+    if(ch == 27){ //Sequencias de controle começadas com ESC
+        getchar_unlocked(); //descarta '['
+        ch = getchar_unlocked(); //Le o valor real
     }
     tty_set_normal();
     return ch;
 }
 
-#elif defined(__WIN32) || defined(__WIN64) //windows specific code
+#elif defined(__WIN32) || defined(__WIN64) //código específico para windows
+#include <windows.h>
+#include <conio.h>
 
-auto termlib::set_echo(bool state) -> void {}
+auto safe_SetConsoleMode(long handle, unsigned long mode) -> unsigned long {
+	HANDLE conHandle = GetStdHandle(handle);
+	if (conHandle == INVALID_HANDLE_VALUE)
+	{
+		return GetLastError();
+	}
 
-auto termlib::tty_set_raw() -> void {}
+	DWORD dwMode = 0;
+	if (!GetConsoleMode(conHandle, &dwMode))
+	{
+		return GetLastError();
+	}
 
-auto termlib::tty_set_normal() -> void {}
+	dwMode |= mode;
+	if (!SetConsoleMode(conHandle, dwMode))
+	{
+		return GetLastError();
+	}
+	return 0;
+}
 
-auto termlib::getch_raw() -> int {}
+auto termlib::setup_terminal() -> unsigned long {
+	system("chcp 65001 > nul");
+	safe_SetConsoleMode(STD_INPUT_HANDLE, ENABLE_VIRTUAL_TERMINAL_INPUT);
+	return safe_SetConsoleMode(STD_OUTPUT_HANDLE, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+}
 
-auto termlib::getch() -> int {}
+auto termlib::set_echo(bool state) -> void {
+	safe_SetConsoleMode(STD_OUTPUT_HANDLE, state ? ENABLE_ECHO_INPUT : ~ENABLE_ECHO_INPUT);
+}
+
+auto termlib::tty_set_raw() -> void {
+	unsigned long newmode = ~ENABLE_ECHO_INPUT | ~ENABLE_LINE_INPUT | ~ENABLE_PROCESSED_INPUT;
+	safe_SetConsoleMode(STD_INPUT_HANDLE, newmode);
+}
+
+auto termlib::tty_set_normal() -> void {
+	safe_SetConsoleMode(STD_INPUT_HANDLE, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+}
+
+auto termlib::getch_raw() -> int {
+	termlib::tty_set_raw();
+	int c = ::getch(); //getch() de conio.h
+	termlib::tty_set_normal();
+	return c;
+}
+
+auto termlib::getch() -> int {
+	termlib::tty_set_raw();
+	int ch = ::getch();
+	if(ch == 3){ //ctrl-c
+		termlib::tty_set_normal();
+		exit(127);
+	}
+	if(ch == 224){ //setas
+		ch = ::getch();
+	}
+	termlib::tty_set_normal();
+	return ch;
+}
 
 #endif
 
