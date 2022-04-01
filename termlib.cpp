@@ -5,6 +5,11 @@
 
 #if defined(__unix__) //código específico para linux
 
+auto setup_terminal() -> unsigned long {
+    std::setlocale(LC_ALL, "pt_BR.UTF-8");
+    return 0;
+}
+
 auto termlib::set_echo(bool state) -> void {
     if(state){
         system("stty echo");
